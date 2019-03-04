@@ -1,0 +1,62 @@
+<!doctype html>  
+<html lang="en">  
+ <head>  
+  <meta charset="UTF-8">    
+  <meta name=”viewport” content=”width=device-width, initial-scale=1″ />
+  <link href="https://unpkg.com/nes.css@2.1.0/css/nes.min.css" rel="stylesheet" />
+  <title>Waitiing</title>  
+    <style>
+       body{
+            background-color: #FFF;
+            background-attachment: fixed;
+            background-position: 50% 50%;
+            background-size: cover;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        #MessageTOP{
+            width:100%;height:14%;   
+            margin:0px auto;  
+            z-index: 99;
+            position: fixed;
+            text-align: center;
+            font-family: "Kongtext";
+            margin-top:250px; 
+        }
+        #Message{
+            width:100%;height:85%;   
+            margin:0px auto;
+            margin-top:450px;  
+            background:rgba(255,255,255,1); 
+            z-index: 98;
+            position: fixed;
+            text-align: center;
+            line-height: 100px;
+            font-family: "Kongtext";
+        }
+
+        #Message p{
+          font-size:30px;
+        }
+        #Message a{
+          text-decoration:none;
+        }
+        @font-face {
+          font-family: "Kongtext";
+          src: url("../fonts/kongtext.ttf");
+        }
+    </style>  
+ </head>  
+  
+  
+ <body>  
+  <div id="MessageTOP">
+    <i class="nes-octocat animate"></i>
+  </div>
+  <div id="Message">
+      <p class="nes-text is-primary";>This website is in buildng!</p>
+      <a href = "build.html" class="nes-text is-primary";text-decoration: none;font-family: "Kongtext";font-size:20px;>Waiting Please!</a>
+  </div>
+
+ </body>  
+</html>  

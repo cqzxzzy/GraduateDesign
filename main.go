@@ -2,7 +2,7 @@ package main
 
 import (
   "fmt"
-  "log"
+  "log" 
   "net/http"
   "github.com/PuerkitoBio/goquery"
   "encoding/json"
@@ -10,7 +10,10 @@ import (
   "github.com/aofei/air"
 )
 
-var a = air.Default
+var (
+  a = air.Default
+  errorhtml string
+)
 
 type NewsMessage struct {
   PostTime string `json:"get_time"`
@@ -23,14 +26,29 @@ type News struct {
 }
 
 func main() {
-  //Scrape()
   a.DebugMode = true
+  a.FILE("/error", "templates/error.html") //var errorhtml string
+  a.FILE("/building", "templates/build.html") //var errorhtml string
+  a.ErrorHandler = func(err error, req *air.Request, res *air.Response) {
+    if res.ContentLength > 0 {
+      return
+    }
+    res.Redirect("/error")
+  }
+
+  a.BATCH(
+    []string{http.MethodGet, http.MethodHead},
+    "/",
+    func(req *air.Request, res *air.Response) error {
+      return res.Redirect("/building")
+    },
+  )
+
   a.GET("/getnews", jsontest)
   a.Serve()
 }
 
-func Scrape(w http.ResponseWriter, r *http.Request) {
-  r.ParseForm()
+func Scrape(req *air.Request, respon *air.Response) error {
   s := NewsMessage{}
   // Request the HTML page.
   res, err := http.Get("http://search.shidi.org/default.aspx?keyword=水鸟")
@@ -66,17 +84,11 @@ func Scrape(w http.ResponseWriter, r *http.Request) {
     fmt.Println("json err:", err)
   }
 
-
-
   json.Unmarshal(json_fin, &s)
-  for i := 0; i <= 9; i++{
-    fmt.Fprintf(w,"<p>")
-    fmt.Fprintf(w,"<a href=" + s.NewsList[i].NewsUrl + ">")
-    fmt.Fprintf(w,s.NewsList[i].NewsName)
-    fmt.Fprintf(w,"</a>")
-    fmt.Fprintf(w,"</p>")
+  respon.Header.Set("Content-Type", "application/json; charset=utf-8")
+  return respon.WriteJSON(s)
     
-  }
+
 }
 
 func jsontest(req *air.Request, res *air.Response) error {
@@ -121,4 +133,3 @@ func jsontest(req *air.Request, res *air.Response) error {
   res.Header.Set("Content-Type", "application/json; charset=utf-8")
   return res.WriteJSON(s)
 }
-
