@@ -2,12 +2,14 @@ package main
 
 import (
   "fmt"
-  "log" 
+  "log"
   "net/http"
   "github.com/PuerkitoBio/goquery"
   "encoding/json"
   "time"
   "github.com/aofei/air"
+  "database/sql"
+  _ "github.com/go-sql-driver/mysql"
 )
 
 var (
@@ -23,6 +25,32 @@ type NewsMessage struct {
 type News struct {
   NewsName string `json:"newsname"`
   NewsUrl   string  `json:"newsurl"`
+}
+
+type waterflow_info_struct struct {
+  PostTime string `json:"get_time"`
+  Waterflow_List []Flows `json:"waterflow_info"`
+}
+
+type Flows struct {
+  Uid int `json:"uid"`
+  Name   string  `json:"name"`
+  Order   string  `json:"order"`
+  Family   string  `json:"family"`
+  Genus   string  `json:"genus"`
+}
+
+type waterflow_detail_struct struct {
+  PostTime string `json:"get_time"`
+  Waterflow_Detail []Flows_detail `json:"waterflow_detail"`
+}
+
+type Flows_detail struct {
+  Uid int `json:"uid"`
+  Name   string  `json:"name"`
+  Latin_name   string  `json:"latin_name"`
+  Introduce   string  `json:"introduce"`
+  Imgurl   string  `json:"imgurl"`
 }
 
 func main() {
@@ -45,6 +73,10 @@ func main() {
   )
 
   a.GET("/getnews", jsontest)
+  a.GET("/getwaterflowinfo", get_waterflow_info)
+  a.GET("/getwaterflowdetail", get_waterflow_detail)
+  a.GET("/waterflow_info/name=:ID",namesearch)
+  a.GET("/waterflow_info/area=:ID",areasearch)
   a.Serve()
 }
 
@@ -87,7 +119,7 @@ func Scrape(req *air.Request, respon *air.Response) error {
   json.Unmarshal(json_fin, &s)
   respon.Header.Set("Content-Type", "application/json; charset=utf-8")
   return respon.WriteJSON(s)
-    
+
 
 }
 
@@ -132,4 +164,145 @@ func jsontest(req *air.Request, res *air.Response) error {
   json.Unmarshal(str, &s)
   res.Header.Set("Content-Type", "application/json; charset=utf-8")
   return res.WriteJSON(s)
+}
+
+func get_waterflow_info(req *air.Request, res *air.Response) error {
+  s := waterflow_info_struct{}
+  var json_file waterflow_info_struct
+  json_file.PostTime = time.Now().Format("2006-01-02")
+
+  db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+  checkErr(err)
+  //查询数据
+  rows, err := db.Query("SELECT * FROM waterflow_info")
+  checkErr(err)
+
+  for rows.Next() {
+    var uid int
+    var name string
+    var Order string
+    var Family string
+    var Genus string
+    err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
+    checkErr(err)
+    json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
+  }
+  db.Close()
+  json_fin, err := json.Marshal(json_file)
+  if err != nil {
+    fmt.Println("json err:", err)
+  }
+  json.Unmarshal(json_fin, &s)
+  res.Header.Set("Content-Type", "application/json; charset=utf-8")
+  return res.WriteJSON(s)
+}
+
+func get_waterflow_detail(req *air.Request, res *air.Response) error {
+  s := waterflow_detail_struct{}
+  var json_file waterflow_detail_struct
+  json_file.PostTime = time.Now().Format("2006-01-02")
+
+  db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+  checkErr(err)
+  //查询数据
+  rows, err := db.Query("SELECT * FROM waterflow_detail")
+  checkErr(err)
+
+  for rows.Next() {
+    var uid int
+    var name string
+    var latin_name string
+    var introduce string
+    var imgurl string
+    err = rows.Scan(&uid, &name, &latin_name, &introduce, &imgurl)
+    checkErr(err)
+    json_file.Waterflow_Detail = append(json_file.Waterflow_Detail, Flows_detail{Uid: uid,Name: name,Latin_name: latin_name,Introduce: introduce, Imgurl: imgurl})
+  }
+  db.Close()
+  json_fin, err := json.Marshal(json_file)
+  if err != nil {
+    fmt.Println("json err:", err)
+  }
+  json.Unmarshal(json_fin, &s)
+  res.Header.Set("Content-Type", "application/json; charset=utf-8")
+  return res.WriteJSON(s)
+}
+
+func namesearch(req *air.Request, res *air.Response) error {
+  pID := req.Param("ID")
+  if pID == nil {
+    return a.NotFoundHandler(req, res)
+  }
+  p := pID.Value().String()
+  s := waterflow_info_struct{}
+  var json_file waterflow_info_struct
+  json_file.PostTime = time.Now().Format("2006-01-02")
+
+  db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+  checkErr(err)
+  //查询数据
+  rows, err := db.Query("SELECT * FROM waterflow_info where name=?",p)
+  checkErr(err)
+
+  for rows.Next() {
+    var uid int
+    var name string
+    var Order string
+    var Family string
+    var Genus string
+    err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
+    checkErr(err)
+    json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
+  }
+  db.Close()
+  json_fin, err := json.Marshal(json_file)
+  if err != nil {
+    fmt.Println("json err:", err)
+  }
+  json.Unmarshal(json_fin, &s)
+  res.Header.Set("Content-Type", "application/json; charset=utf-8")
+  return res.WriteJSON(s)
+}
+
+func areasearch(req *air.Request, res *air.Response) error {
+  pID := req.Param("ID")
+  if pID == nil {
+    return a.NotFoundHandler(req, res)
+  }
+  p := pID.Value().String()
+  fmt.Println(p)
+  s := waterflow_info_struct{}
+  var json_file waterflow_info_struct
+  json_file.PostTime = time.Now().Format("2006-01-02")
+
+  db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+  checkErr(err)
+  //查询数据
+  rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_REF_area where waterflow_info.id = waterflow_REF_area.waterflow_id and Area.area_id=? and Area.area_id = waterflow_REF_area.area_id",p)
+  checkErr(err)
+
+  for rows.Next() {
+    var uid int
+    var name string
+    var Order string
+    var Family string
+    var Genus string
+    err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
+    checkErr(err)
+    json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
+  }
+  db.Close()
+  json_fin, err := json.Marshal(json_file)
+  if err != nil {
+    fmt.Println("json err:", err)
+  }
+  json.Unmarshal(json_fin, &s)
+  res.Header.Set("Content-Type", "application/json; charset=utf-8")
+  return res.WriteJSON(s)
+}
+
+func checkErr(err error) {
+  if err != nil {
+    panic(err)
+  }
 }
