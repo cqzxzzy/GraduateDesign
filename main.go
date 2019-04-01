@@ -53,6 +53,8 @@ type Flows_detail struct {
   Imgurl   string  `json:"imgurl"`
 }
 
+type Map map[string]interface{}
+
 func main() {
   a.DebugMode = true
   a.FILE("/error", "templates/error.html") //var errorhtml string
@@ -77,6 +79,7 @@ func main() {
   a.GET("/getwaterflowdetail", get_waterflow_detail)
   a.GET("/waterflow_info/name=:ID",namesearch)
   a.GET("/waterflow_info/area=:ID",areasearch)
+  a.POST("/api/comments",commentsHandler)
   a.Serve()
 }
 
@@ -121,6 +124,33 @@ func Scrape(req *air.Request, respon *air.Response) error {
   return respon.WriteJSON(s)
 
 
+}
+
+func commentsHandler(req *air.Request, res *air.Response) error {
+  user_name_A := req.Param("name").Value()
+  content_A := req.Param("content").Value()
+  mail_address_A := req.Param("mail").Value()
+
+  name := user_name_A.String()
+  content := content_A.String()
+  mail_address := mail_address_A.String()
+
+  db, err := sql.Open("mysql", "root:123456@/test?charset=utf8")
+  checkErr(err)
+
+  stmt, err := db.Prepare("INSERT message_board SET user_name=?,comment=?,address=?")
+    checkErr(err)
+
+  re, err := stmt.Exec(name, content, mail_address)
+    checkErr(err)
+
+  id, err := re.LastInsertId()
+    checkErr(err)
+  fmt.Println(id)
+
+  db.Close()
+
+  return Success(res, "")
 }
 
 func jsontest(req *air.Request, res *air.Response) error {
@@ -305,4 +335,16 @@ func checkErr(err error) {
   if err != nil {
     panic(err)
   }
+}
+
+func Success(res *air.Response, data interface{}) error {
+  res.Status = 200
+  if data == nil {
+    data = ""
+  }
+  return res.WriteJSON(Map{
+    "code":  0,
+    "error": "",
+    "data":  data,
+  })
 }
