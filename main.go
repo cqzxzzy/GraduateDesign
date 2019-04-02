@@ -7,6 +7,7 @@ import (
   "github.com/PuerkitoBio/goquery"
   "encoding/json"
   "time"
+  "math/rand"
   "github.com/aofei/air"
   "database/sql"
   _ "github.com/go-sql-driver/mysql"
@@ -77,9 +78,10 @@ func main() {
   a.GET("/getnews", jsontest)
   a.GET("/getwaterflowinfo", get_waterflow_info)
   a.GET("/getwaterflowdetail", get_waterflow_detail)
-  a.GET("/waterflow_info/name=:ID",namesearch)
+  a.GET("/waterflow_info/name=:NAME",namesearch)
   a.GET("/waterflow_info/area=:ID",areasearch)
-  a.POST("/api/comments",commentsHandler)
+  a.POST("/api/v1/comments",commentsHandler)
+  a.GET("/api/v1/dailypush",dailypushHandler)
   a.Serve()
 }
 
@@ -122,8 +124,6 @@ func Scrape(req *air.Request, respon *air.Response) error {
   json.Unmarshal(json_fin, &s)
   respon.Header.Set("Content-Type", "application/json; charset=utf-8")
   return respon.WriteJSON(s)
-
-
 }
 
 func commentsHandler(req *air.Request, res *air.Response) error {
@@ -151,6 +151,47 @@ func commentsHandler(req *air.Request, res *air.Response) error {
   db.Close()
 
   return Success(res, "")
+}
+
+func dailypushHandler(req *air.Request, res *air.Response) error {
+  i := rand.Intn(4)
+  j := rand.Intn(4)
+
+  for ; i == 0; {
+    i = rand.Intn(4)
+  }
+  for ; j == 0 || j==i; {
+    j = rand.Intn(4)
+  }
+
+  s := waterflow_detail_struct{}
+  var json_file waterflow_detail_struct
+  json_file.PostTime = time.Now().Format("2006-01-02")
+
+  db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+  checkErr(err)
+  //查询数据
+  rows, err := db.Query("SELECT * FROM waterflow_detail where id=? or id=?", i, j)
+  checkErr(err)
+
+  for rows.Next() {
+    var uid int
+    var name string
+    var latin_name string
+    var introduce string
+    var imgurl string
+    err = rows.Scan(&uid, &name, &latin_name, &introduce, &imgurl)
+    checkErr(err)
+    json_file.Waterflow_Detail = append(json_file.Waterflow_Detail, Flows_detail{Uid: uid,Name: name,Latin_name: latin_name,Introduce: introduce, Imgurl: imgurl})
+  }
+  db.Close()
+  json_fin, err := json.Marshal(json_file)
+  if err != nil {
+    fmt.Println("json err:", err)
+  }
+  json.Unmarshal(json_fin, &s)
+  res.Header.Set("Content-Type", "application/json; charset=utf-8")
+  return res.WriteJSON(s)
 }
 
 func jsontest(req *air.Request, res *air.Response) error {
@@ -258,8 +299,9 @@ func get_waterflow_detail(req *air.Request, res *air.Response) error {
   return res.WriteJSON(s)
 }
 
+
 func namesearch(req *air.Request, res *air.Response) error {
-  pID := req.Param("ID")
+  pID := req.Param("NAME")
   if pID == nil {
     return a.NotFoundHandler(req, res)
   }
@@ -271,7 +313,7 @@ func namesearch(req *air.Request, res *air.Response) error {
   db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
   checkErr(err)
   //查询数据
-  rows, err := db.Query("SELECT * FROM waterflow_info where name=?",p)
+  rows, err := db.Query("SELECT * FROM waterflow_info where name like ?","%" + p + "%")
   checkErr(err)
 
   for rows.Next() {
