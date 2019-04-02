@@ -41,6 +41,19 @@ type Flows struct {
   Genus   string  `json:"genus"`
 }
 
+type Message_board_struct struct {
+  PostTime string `json:"get_time"`
+  Board []Message `json:"Message"`
+}
+
+type Message struct {
+  Uid int `json:"uid"`
+  Name string `json:"name"`
+  Comment string `json:"comment"`
+  Mail string `json:"address"`
+  SendTime string `json:"sendtime"`
+}
+
 type waterflow_detail_struct struct {
   PostTime string `json:"get_time"`
   Waterflow_Detail []Flows_detail `json:"waterflow_detail"`
@@ -78,10 +91,12 @@ func main() {
   a.GET("/getnews", jsontest)
   a.GET("/getwaterflowinfo", get_waterflow_info)
   a.GET("/getwaterflowdetail", get_waterflow_detail)
+  a.GET("/getcomments", get_comments)
   a.GET("/waterflow_info/name=:NAME",namesearch)
   a.GET("/waterflow_info/area=:ID",areasearch)
   a.POST("/api/v1/comments",commentsHandler)
   a.GET("/api/v1/dailypush",dailypushHandler)
+
   a.Serve()
 }
 
@@ -134,14 +149,15 @@ func commentsHandler(req *air.Request, res *air.Response) error {
   name := user_name_A.String()
   content := content_A.String()
   mail_address := mail_address_A.String()
+  send_time := time.Now().Format("2006-01-02 15:04:05") 
 
   db, err := sql.Open("mysql", "root:123456@/test?charset=utf8")
   checkErr(err)
 
-  stmt, err := db.Prepare("INSERT message_board SET user_name=?,comment=?,address=?")
+  stmt, err := db.Prepare("INSERT message_board SET user_name=?,comment=?,address=?,time=?")
     checkErr(err)
 
-  re, err := stmt.Exec(name, content, mail_address)
+  re, err := stmt.Exec(name, content, mail_address, send_time)
     checkErr(err)
 
   id, err := re.LastInsertId()
@@ -237,6 +253,37 @@ func jsontest(req *air.Request, res *air.Response) error {
   return res.WriteJSON(s)
 }
 
+func get_comments(req *air.Request, res *air.Response) error {
+  s := Message_board_struct{}
+  var json_file Message_board_struct
+  json_file.PostTime = time.Now().Format("2006-01-02 15:04:05")
+
+  db, err := sql.Open("mysql", "root:123456@/test?charset=utf8")
+  checkErr(err)
+  //查询数据
+  rows, err := db.Query("SELECT * FROM message_board")
+  checkErr(err)
+
+  for rows.Next() {
+    var uid int
+    var user_name string
+    var comment string
+    var mail string
+    var sendtime string
+    err = rows.Scan(&uid, &user_name, &comment, &mail, &sendtime)
+    checkErr(err)
+    json_file.Board = append(json_file.Board, Message{Uid: uid,Name: user_name,Comment: comment,Mail: mail,SendTime: sendtime})
+  }
+  db.Close()
+  json_fin, err := json.Marshal(json_file)
+  if err != nil {
+    fmt.Println("json err:", err)
+  }
+  json.Unmarshal(json_fin, &s)
+  res.Header.Set("Content-Type", "application/json; charset=utf-8")
+  return res.WriteJSON(s)
+}
+
 func get_waterflow_info(req *air.Request, res *air.Response) error {
   s := waterflow_info_struct{}
   var json_file waterflow_info_struct
@@ -298,7 +345,6 @@ func get_waterflow_detail(req *air.Request, res *air.Response) error {
   res.Header.Set("Content-Type", "application/json; charset=utf-8")
   return res.WriteJSON(s)
 }
-
 
 func namesearch(req *air.Request, res *air.Response) error {
   pID := req.Param("NAME")
