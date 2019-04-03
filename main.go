@@ -95,8 +95,8 @@ func main() {
   a.GET("/waterflow_info/name=:NAME",namesearch)
   a.GET("/waterflow_info/area=:ID",areasearch)
   a.POST("/api/v1/comments",commentsHandler)
-  a.GET("/api/v1/dailypush",dailypushHandler)
-
+  a.POST("/api/v1/dailypush",dailypushHandler)
+  a.POST("/api/v1/test",testHandler)
   a.Serve()
 }
 
@@ -208,6 +208,21 @@ func dailypushHandler(req *air.Request, res *air.Response) error {
   json.Unmarshal(json_fin, &s)
   res.Header.Set("Content-Type", "application/json; charset=utf-8")
   return res.WriteJSON(s)
+}
+
+func testHandler(req *air.Request, res *air.Response) error {
+
+
+  user_gender, err := req.Param("gender").Value().Float64()
+  if err != nil{
+    panic(err)
+  }
+
+  t := 2.0
+  t = RandonFloat(t)
+  fmt.Println(user_gender)
+  fmt.Println(t)
+  return Success(res, "")
 }
 
 func jsontest(req *air.Request, res *air.Response) error {
@@ -435,4 +450,11 @@ func Success(res *air.Response, data interface{}) error {
     "error": "",
     "data":  data,
   })
+}
+
+func RandonFloat(data float64) float64 {
+  i := rand.Intn(100)
+  j := float64(i-50)/1000
+  var ans float64 = data*(1.0+j)
+  return ans
 }
