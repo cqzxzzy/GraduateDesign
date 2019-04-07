@@ -6,6 +6,8 @@ github.com/PuerkitoBio/goquery v1.5.0 h1:uGvmFXOA73IKluu/F84Xd1tt/z07GYm8X49XKHP
 github.com/PuerkitoBio/goquery v1.5.0/go.mod h1:qD2PgZ9lccMbQlc7eEOjaeRlFQON7xY8kdmcsrnKqMg=
 github.com/VictoriaMetrics/fastcache v1.4.5 h1:g/XZF/hWaVtQ8SgDAkyl6lbVNrpybavOUYkev5LfLN4=
 github.com/VictoriaMetrics/fastcache v1.4.5/go.mod h1:FZV1r1HyPy1UHCTJ4vuuYJ1oDYM5SRPwOj9wlxbhog4=
+github.com/aliyun/aliyun-oss-go-sdk v0.0.0-20190307165228-86c17b95fcd5 h1:nWDRPCyCltiTsANwC/n3QZH7Vww33Npq9MKqlwRzI/c=
+github.com/aliyun/aliyun-oss-go-sdk v0.0.0-20190307165228-86c17b95fcd5/go.mod h1:T/Aws4fEfogEE9v+HPhhw+CntffsBHJ8nXQCwKr0/g8=
 github.com/allegro/bigcache v1.1.1-0.20190116153254-84a0ff3f153c/go.mod h1:Cb/ax3seSYIx7SuZdm2G2xzfwmv3TPSk2ucNfQESPXM=
 github.com/allegro/bigcache v1.2.0/go.mod h1:Cb/ax3seSYIx7SuZdm2G2xzfwmv3TPSk2ucNfQESPXM=
 github.com/andybalholm/cascadia v1.0.0 h1:hOCXnnZ5A+3eVDX8pvgl4kofXv2ELss0bKcqRySc45o=
@@ -14,6 +16,8 @@ github.com/aofei/air v0.8.4 h1:jYFV2wBTpDiIai2bT+PxCMp/4egsW7G7VkMyVCuXOQs=
 github.com/aofei/air v0.8.4/go.mod h1:mTG9bgP21APkRbXCvxkJcGIpVPoEQj7b3ZkBQMPsEd8=
 github.com/aofei/mimesniffer v1.1.0 h1:2VQ4YcuC8Cnyh+FjJZQJLx6TRzCHdEal9JzMVgNssJ4=
 github.com/aofei/mimesniffer v1.1.0/go.mod h1:5pKgIIpqZUMS5foKAqAhdAMjCMpYFbT1oWZmEIvDGSs=
+github.com/aofei/sandid v1.1.0 h1:DxUU9/kvcjBt8pg00iNEPmJ2iBqtGmH/a4kX2daVHaA=
+github.com/aofei/sandid v1.1.0/go.mod h1:xD11PfSKgnd0FtkQFg/lCNkNmqq3o7WPvhdLLgSFtPY=
 github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/cheekybits/is v0.0.0-20150225183255-68e9c0620927/go.mod h1:h/aW8ynjgkuj+NQRlZcDbAbM1ORAbXjXX77sX7T289U=
@@ -65,6 +69,8 @@ golang.org/x/sys v0.0.0-20181031143558-9b800f95dbbc/go.mod h1:STP8DvDyc/dI5b8T5h
 golang.org/x/sys v0.0.0-20190225065934-cc5685c2db12/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 h1:SvFZT6jyqRaOeXpc5h/JSfZenJ2O330aBsf7JfSUXmQ=
+golang.org/x/time v0.0.0-20190308202827-9d24e82272b4/go.mod h1:tRJNPiyCQ0inRvYxbN9jk5I+vvW/OXSQhTDSoE431IQ=
 google.golang.org/appengine v1.4.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
