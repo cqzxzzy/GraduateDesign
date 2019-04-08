@@ -2,7 +2,7 @@
 
 Website Development About Waterflow Base On Go
 
-最新修改时间：2019-04-02
+最新修改时间：2019-04-08
 
 - **关于**
 
@@ -25,3 +25,5 @@ Website Development About Waterflow Base On Go
   7. 留言API
 
   8. 每日推送水鸟信息API
+
+  9. 新增“你是哪种水鸟”测试
