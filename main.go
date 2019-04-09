@@ -20,6 +20,7 @@ import (
   "bytes"
   "strconv"
   "math"
+  "net/url"
 )
 
 var (
@@ -90,7 +91,6 @@ type Test_result struct {
   Similar_name string `json:"相似水鸟"`
   Similar string `json:"相似度"`
   Similar_imageurl string `json:"该水鸟图片地址"`
-  
 }
 
 type Map map[string]interface{}
@@ -283,6 +283,7 @@ func Scrape(req *air.Request, respon *air.Response) error {
   respon.Header.Set("Content-Type", "application/json; charset=utf-8")
   return respon.WriteJSON(s1)
 }
+
 func commentsHandler(req *air.Request, res *air.Response) error {
   user_name_A := req.Param("name").Value()
   content_A := req.Param("content").Value()
@@ -603,13 +604,10 @@ func testHandler(req *air.Request, res *air.Response) error {
     }
     checkErr(err)
   }
-
-  err = db.QueryRow("SELECT imageurl FROM waterflow_detail where name=?",similar_name).Scan(&similar_imageurl)
-  checkErr(err)
-
   db.Close()
 
   max_similar = Round2(max_similar)
+  similar_imageurl = "https://waterflow-image.oss-cn-beijing.aliyuncs.com/" + url.QueryEscape(similar_name) + ".jpg"
   var similar string
   similar = strconv.FormatFloat((max_similar+1)*50,'f',2,64)
   similar += "%"
@@ -879,6 +877,6 @@ func Pearson(x1 float64,x2 float64,x3 float64,x4 float64,y1 float64,y2 float64,y
 }
 
 func Round2(f float64) float64 {
-n10 := math.Pow10(4)
-return math.Trunc((f+0.5/n10)*n10) / n10
+  n10 := math.Pow10(4)
+  return math.Trunc((f+0.5/n10)*n10) / n10
 }
