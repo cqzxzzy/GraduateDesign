@@ -583,7 +583,8 @@ func testHandler(req *air.Request, res *air.Response) error {
   checkErr(err)
 
   var max_similar float64
-  max_similar = -2.0
+  var similar_num float64
+  max_similar = 9999.0
   var similar_name string
   var similar_imageurl string
 
@@ -594,22 +595,24 @@ func testHandler(req *air.Request, res *air.Response) error {
     var y2 float64
     var y3 float64
     var y4 float64
-    var pearson_num float64
+    var euclidean_num float64
 
     err = rows.Scan(&uid, &name, &y1, &y2, &y3, &y4)
-    pearson_num = Pearson(IE,SN,TF,PJ,y1,y2,y3,y4)
-    if(max_similar<pearson_num){
-      max_similar = pearson_num
+    euclidean_num = Euclidean(IE,SN,TF,PJ,y1,y2,y3,y4)
+    fmt.Println(euclidean_num)
+    if(max_similar>euclidean_num){
+      max_similar = euclidean_num
       similar_name = name
+      similar_num = Pearson(IE,SN,TF,PJ,y1,y2,y3,y4)
     }
     checkErr(err)
   }
   db.Close()
 
-  max_similar = Round2(max_similar)
+  similar_num = Round2(similar_num)
   similar_imageurl = "https://waterflow-image.oss-cn-beijing.aliyuncs.com/" + url.QueryEscape(similar_name) + ".jpg"
   var similar string
-  similar = strconv.FormatFloat((max_similar+1)*50,'f',2,64)
+  similar = strconv.FormatFloat((similar_num+1)*50,'f',2,64)
   similar += "%"
   var json_file Test_result
 
@@ -863,6 +866,12 @@ func RandonFloat(data float64) float64 {
   return ans
 }
 
+func Euclidean(x1 float64,x2 float64,x3 float64,x4 float64,y1 float64,y2 float64,y3 float64,y4 float64) float64 {
+
+  sum := math.Pow(x1-y1,2) + math.Pow(x2-y2,2) + math.Pow(x3-y3,2) + math.Pow(x4-y4,2)
+  return math.Sqrt(sum)
+}
+
 func Pearson(x1 float64,x2 float64,x3 float64,x4 float64,y1 float64,y2 float64,y3 float64,y4 float64) float64 {
   var avr_x, avr_y float64
 
@@ -875,7 +884,6 @@ func Pearson(x1 float64,x2 float64,x3 float64,x4 float64,y1 float64,y2 float64,y
 
   return num1/(num2*num3)
 }
-
 func Round2(f float64) float64 {
   n10 := math.Pow10(4)
   return math.Trunc((f+0.5/n10)*n10) / n10
