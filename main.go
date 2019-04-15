@@ -119,8 +119,7 @@ func main() {
   a.GET("/getwaterflowinfo", get_waterflow_info)
   a.GET("/getwaterflowdetail", get_waterflow_detail)
   a.GET("/getcomments", get_comments)
-  a.GET("/waterflow_info/name=:NAME",namesearch)
-  a.GET("/waterflow_info/area=:ID",areasearch)
+  a.GET("/s",search)
   a.POST("/api/v1/comments",commentsHandler)
   a.POST("/api/v1/dailypush",dailypushHandler)
   a.POST("/api/v1/test",testHandler)
@@ -778,77 +777,133 @@ func get_waterflow_detail(req *air.Request, res *air.Response) error {
   return res.WriteJSON(s)
 }
 
-func namesearch(req *air.Request, res *air.Response) error {
-  pID := req.Param("NAME")
-  if pID == nil {
+func search(req *air.Request, res *air.Response) error {
+  pNAME := req.Param("name")
+  pAREA := req.Param("area")
+  p_name := pNAME.Value().String()
+  p_area := pAREA.Value().String()
+  if pAREA == nil || pNAME == nil{
     return a.NotFoundHandler(req, res)
-  }
-  p := pID.Value().String()
-  s := waterflow_info_struct{}
-  var json_file waterflow_info_struct
-  json_file.PostTime = time.Now().Format("2006-01-02")
+  } else if p_area == "all" && p_name != "all"{
+      
+      s := waterflow_info_struct{}
+      var json_file waterflow_info_struct
+      json_file.PostTime = time.Now().Format("2006-01-02")
 
-  db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
-  checkErr(err)
-  //查询数据
-  rows, err := db.Query("SELECT * FROM waterflow_info where name like ?","%" + p + "%")
-  checkErr(err)
+      db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+      checkErr(err)
+      //查询数据
+      rows, err := db.Query("SELECT * FROM waterflow_info where name like ?","%" + p_name + "%")
+      checkErr(err)
 
-  for rows.Next() {
-    var uid int
-    var name string
-    var Order string
-    var Family string
-    var Genus string
-    err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
-    checkErr(err)
-    json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
-  }
-  db.Close()
-  json_fin, err := json.Marshal(json_file)
-  if err != nil {
-    fmt.Println("json err:", err)
-  }
-  json.Unmarshal(json_fin, &s)
-  res.Header.Set("Content-Type", "application/json; charset=utf-8")
-  return res.WriteJSON(s)
-}
+      for rows.Next() {
+        var uid int
+        var name string
+        var Order string
+        var Family string
+        var Genus string
+        err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
+        checkErr(err)
+        json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
+      }
+      db.Close()
+      json_fin, err := json.Marshal(json_file)
+      if err != nil {
+        fmt.Println("json err:", err)
+      }
+      json.Unmarshal(json_fin, &s)
+      res.Header.Set("Content-Type", "application/json; charset=utf-8")
+      return res.WriteJSON(s)
 
-func areasearch(req *air.Request, res *air.Response) error {
-  pID := req.Param("ID")
-  if pID == nil {
-    return a.NotFoundHandler(req, res)
-  }
-  p := pID.Value().String()
-  fmt.Println(p)
-  s := waterflow_info_struct{}
-  var json_file waterflow_info_struct
-  json_file.PostTime = time.Now().Format("2006-01-02")
+  } else if p_area == "all" && p_name == "all"{
+      s := waterflow_info_struct{}
+      var json_file waterflow_info_struct
+      json_file.PostTime = time.Now().Format("2006-01-02")
 
-  db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
-  checkErr(err)
-  //查询数据
-  rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_REF_area where waterflow_info.id = waterflow_REF_area.waterflow_id and Area.area_id=? and Area.area_id = waterflow_REF_area.area_id",p)
-  checkErr(err)
+      db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+      checkErr(err)
+      //查询数据
+      rows, err := db.Query("SELECT * FROM waterflow_info")
+      checkErr(err)
 
-  for rows.Next() {
-    var uid int
-    var name string
-    var Order string
-    var Family string
-    var Genus string
-    err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
-    checkErr(err)
-    json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
+      for rows.Next() {
+        var uid int
+        var name string
+        var Order string
+        var Family string
+        var Genus string
+        err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
+        checkErr(err)
+        json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
+      }
+      db.Close()
+      json_fin, err := json.Marshal(json_file)
+      if err != nil {
+        fmt.Println("json err:", err)
+      }
+      json.Unmarshal(json_fin, &s)
+      res.Header.Set("Content-Type", "application/json; charset=utf-8")
+      return res.WriteJSON(s)
+  } else if p_area != "all" && p_name == "all"{
+      s := waterflow_info_struct{}
+      var json_file waterflow_info_struct
+      json_file.PostTime = time.Now().Format("2006-01-02")
+
+      db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+      checkErr(err)
+      //查询数据
+      rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_REF_area where waterflow_info.id = waterflow_REF_area.waterflow_id and Area.area_id=? and Area.area_id = waterflow_REF_area.area_id",p_area)
+      checkErr(err)
+
+      for rows.Next() {
+        var uid int
+        var name string
+        var Order string
+        var Family string
+        var Genus string
+        err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
+        checkErr(err)
+        json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
+      }
+      db.Close()
+      json_fin, err := json.Marshal(json_file)
+      if err != nil {
+        fmt.Println("json err:", err)
+      }
+      json.Unmarshal(json_fin, &s)
+      res.Header.Set("Content-Type", "application/json; charset=utf-8")
+      return res.WriteJSON(s)
+  } else {
+      s := waterflow_info_struct{}
+      var json_file waterflow_info_struct
+      json_file.PostTime = time.Now().Format("2006-01-02")
+
+      db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+      checkErr(err)
+      //查询数据
+      rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_REF_area where waterflow_info.id = waterflow_REF_area.waterflow_id and Area.area_id=? and Area.area_id = waterflow_REF_area.area_id and name like ?",p_area, "%" + p_name + "%")
+      checkErr(err)
+
+      for rows.Next() {
+        var uid int
+        var name string
+        var Order string
+        var Family string
+        var Genus string
+        err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
+        checkErr(err)
+        json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
+      }
+      db.Close()
+      json_fin, err := json.Marshal(json_file)
+      if err != nil {
+        fmt.Println("json err:", err)
+      }
+      json.Unmarshal(json_fin, &s)
+      res.Header.Set("Content-Type", "application/json; charset=utf-8")
+      return res.WriteJSON(s)
   }
-  db.Close()
-  json_fin, err := json.Marshal(json_file)
-  if err != nil {
-    fmt.Println("json err:", err)
-  }
-  json.Unmarshal(json_fin, &s)
-  res.Header.Set("Content-Type", "application/json; charset=utf-8")
-  return res.WriteJSON(s)
+  
 }
 
 func checkErr(err error) {
