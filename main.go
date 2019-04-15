@@ -118,7 +118,7 @@ func main() {
   a.GET("/getnews", jsontest)
   a.GET("/getwaterflowinfo", get_waterflow_info)
   a.GET("/getwaterflowdetail", get_waterflow_detail)
-  a.GET("/getcomments&&page=:NUM", get_comments)
+  a.GET("/getcomments", get_comments)
   a.GET("/waterflow_info/name=:NAME",namesearch)
   a.GET("/waterflow_info/area=:ID",areasearch)
   a.POST("/api/v1/comments",commentsHandler)
@@ -297,6 +297,8 @@ func commentsHandler(req *air.Request, res *air.Response) error {
   db, err := sql.Open("mysql", "root:123456@/test?charset=utf8")
   checkErr(err)
 
+ 
+
   stmt, err := db.Prepare("INSERT message_board SET user_name=?,comment=?,address=?,time=?")
     checkErr(err)
 
@@ -305,6 +307,8 @@ func commentsHandler(req *air.Request, res *air.Response) error {
 
   id, err := re.LastInsertId()
     checkErr(err)
+
+  fmt.Println(id)
 
   db.Close()
 
@@ -674,7 +678,7 @@ func jsontest(req *air.Request, res *air.Response) error {
 }
 
 func get_comments(req *air.Request, res *air.Response) error {
-  pNUM := req.Param("NUM")
+  pNUM := req.Param("page")
   if pNUM == nil {
     return a.NotFoundHandler(req, res)
   }
