@@ -115,7 +115,7 @@ func main() {
     },
   )
 
-  a.GET("/getnews", jsontest)
+  a.GET("/getnews", Scrape)
   a.GET("/getwaterflowinfo", get_waterflow_info)
   a.GET("/getwaterflowdetail", get_waterflow_detail)
   a.GET("/getcomments", get_comments)
@@ -127,152 +127,193 @@ func main() {
 }
 
 func Scrape(req *air.Request, respon *air.Response) error {
+
+  now_time := time.Now().Unix()
   s1 := NewsMessage{}
-  // Request the HTML page.
-  res, err := http.Get("http://search.shidi.org/default.aspx?keyword=水鸟")
-  if err != nil {
-    log.Fatal(err)
-  }
-
-  defer res.Body.Close()
-  if res.StatusCode != 200 {
-    log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
-  }
-
-  // Load the HTML document
-  doc, err := goquery.NewDocumentFromReader(res.Body)
-  if err != nil {
-    log.Fatal(err)
-  }
-
-  // Find the review items and Restore with Json
-
   var json_file NewsMessage
-  json_file.PostTime = time.Now().Format("2006-01-02")
 
-  doc.Find("ul").Find("li").EachWithBreak(func(i int, s *goquery.Selection) bool {
-    // For each item found, get the band and title
-    band := s.Find("a").Text()
-    href := s.Find(".siteurl").Text()
+  db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+  checkErr(err)
 
-    href = strings.Replace(href, " ", "", -1)
-    href = strings.Replace(href, "\n", "", -1)
-    href = strings.Replace(href, "\r", "", -1)
-    href = strings.Replace(href, "\t", "", -1)
-
-    //
-    inhref, err := http.Get(href)
-    if err != nil {
-      log.Fatal(err)
-    }
-
-    defer inhref.Body.Close()
-    if inhref.StatusCode != 200 {
-      log.Fatalf("status code error: %d %s", inhref.StatusCode, inhref.Status)
-    }
-
-    // Load the HTML document
-    indoc, err := goquery.NewDocumentFromReader(inhref.Body)
-    if err != nil {
-      log.Fatal(err)
-    }
-
-    author := indoc.Find(".arcTitle").Find("strong").Text()
-    newstime := indoc.Find(".arcTitle").Find(".arcTime").Text()
-    //newstime = strings.Replace(newstime, " ", "", -1)
-    newstime = strings.Replace(newstime, "\n", "", -1)
-    newstime = strings.TrimSpace(newstime)
-    //imageurl := indoc.Find(".arcTitle").Find(".arcTime").Text()
-    var str string
-    var 属性 string
-    var imageurl string
-    var imagesrc string
-
-    indoc.Find("#endText").Find("p").Each(func(i_tmp int, s_tmp *goquery.Selection) {
-        str = str + s_tmp.Text() + "\\n"
-        str = strings.Replace(str, "\\n\\n", "\\n", -1)
-    })
-    imagesrc, _ = indoc.Find("#endText").Find("img").Attr("src")
-    imagesrc = strings.TrimSpace(imagesrc)
-    name := sandid.New().String()
-
-    if strings.HasPrefix(imagesrc, "data:image/"){
-
-      imagesrc = strings.TrimPrefix(imagesrc,"data:image/jpeg;base64,")
-      
-
-      b, err := base64.StdEncoding.DecodeString(imagesrc)
-      if err != nil {
-        panic(err)
-      }
-      属性 = mimesniffer.Sniff(b)
-      fmt.Println(属性)
-      
-      client, err := oss.New("oss-cn-beijing.aliyuncs.com", "LTAIt4GfhTk7x4r5", "PI7lKD9hkAjK42c68tzPIZatUZ5Zc8")
-      if err != nil {
-        fmt.Println("Error:", err)
-        os.Exit(-1)
-      }
-
-      // 获取存储空间。
-      bucket, err := client.Bucket("waterflow-scrapy")
-      if err != nil {
-        fmt.Println("Error:", err)
-        os.Exit(-1)
-      }
-
-      // 上传本地文件。
-      err = bucket.PutObject(name, bytes.NewReader(b), oss.ContentType(属性))
-      if err != nil {
-        fmt.Println("Error:", err)
-        os.Exit(-1)
-      }
-      
-      imageurl = "https://waterflow-scrapy.oss-cn-beijing.aliyuncs.com/" + name
-      
-    } else if(imagesrc!=""){
-      
-      
-      res, err := http.Get(imagesrc)
-      if err != nil{
-        fmt.Println(imagesrc)
-        panic(err)
-      }
+  var get_time int64
+  err = db.QueryRow("SELECT gettime FROM waterflow_news where id=(select max(id) from waterflow_news)").Scan(&get_time)
+  if err == sql.ErrNoRows || now_time-get_time >= 604800{ //执行爬取函数
+    
+    var page_num int
+    var news_num int
+    page_num = 1
+    news_num = 0
+    
+    json_file.PostTime = time.Now().Format("2006-01-02")
+    for ;news_num <= 19;{
+      page_number:= strconv.Itoa(page_num)
+      // Request the HTML page.
+      res, err := http.Get("http://search.shidi.org/default.aspx?keyword=水鸟&&page=" + page_number)
       defer res.Body.Close()
-
-      client, err := oss.New("oss-cn-beijing.aliyuncs.com", "LTAIt4GfhTk7x4r5", "PI7lKD9hkAjK42c68tzPIZatUZ5Zc8")
-      if err != nil {
-        fmt.Println("Error:", err)
-        os.Exit(-1)
+      if res.StatusCode != 200 {
+        log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
       }
 
-      // 获取存储空间。
-      bucket, err := client.Bucket("waterflow-scrapy")
+      // Load the HTML document
+      doc, err := goquery.NewDocumentFromReader(res.Body)
       if err != nil {
-        fmt.Println("Error:", err)
-        os.Exit(-1)
+        log.Fatal(err)
       }
 
-      // 上传本地文件。
-      err = bucket.PutObject(name, res.Body, oss.ContentType(属性))
-      if err != nil {
-        fmt.Println("Error:", err)
-        os.Exit(-1)
-      }
-      
-      imageurl = "https://waterflow-scrapy.oss-cn-beijing.aliyuncs.com/" + name
+      // Find the review items and Restore with Json
+
+      doc.Find("ul").Find("li").EachWithBreak(func(i int, s *goquery.Selection) bool {
+        // For each item found, get the band and title
+        band := s.Find("a").Text()
+        href := s.Find(".siteurl").Text()
+
+        href = strings.Replace(href, " ", "", -1)
+        href = strings.Replace(href, "\n", "", -1)
+        href = strings.Replace(href, "\r", "", -1)
+        href = strings.Replace(href, "\t", "", -1)
+
+        //
+        inhref, err := http.Get(href)
+        if err != nil {
+          log.Fatal(err)
+        }
+
+        defer inhref.Body.Close()
+        if inhref.StatusCode != 200 {
+          log.Fatalf("status code error: %d %s", inhref.StatusCode, inhref.Status)
+        }
+
+        // Load the HTML document
+        indoc, err := goquery.NewDocumentFromReader(inhref.Body)
+        if err != nil {
+          log.Fatal(err)
+        }
+
+        author := indoc.Find(".arcTitle").Find("strong").Text()
+        newstime := indoc.Find(".arcTitle").Find(".arcTime").Text()
+        //newstime = strings.Replace(newstime, " ", "", -1)
+        newstime = strings.Replace(newstime, "\n", "", -1)
+        newstime = strings.TrimSpace(newstime)
+        //imageurl := indoc.Find(".arcTitle").Find(".arcTime").Text()
+        var str string
+        var 属性 string
+        var imageurl string
+        var imagesrc string
+
+        indoc.Find("#endText").Find("p").Each(func(i_tmp int, s_tmp *goquery.Selection) {
+            str = str + s_tmp.Text() + "\\n"
+            str = strings.Replace(str, "\\n\\n", "\\n", -1)
+        })
+        imagesrc, _ = indoc.Find("#endText").Find("img").Attr("src")
+        imagesrc = strings.TrimSpace(imagesrc)
+        name := sandid.New().String()
+
+        if strings.HasPrefix(imagesrc, "data:image/"){
+
+          imagesrc = strings.TrimPrefix(imagesrc,"data:image/jpeg;base64,")
+          
+
+          b, err := base64.StdEncoding.DecodeString(imagesrc)
+          if err != nil {
+            panic(err)
+          }
+          属性 = mimesniffer.Sniff(b)
+          fmt.Println(属性)
+          
+          client, err := oss.New("oss-cn-beijing.aliyuncs.com", "LTAIt4GfhTk7x4r5", "PI7lKD9hkAjK42c68tzPIZatUZ5Zc8")
+          if err != nil {
+            fmt.Println("Error:", err)
+            os.Exit(-1)
+          }
+
+          // 获取存储空间。
+          bucket, err := client.Bucket("waterflow-scrapy")
+          if err != nil {
+            fmt.Println("Error:", err)
+            os.Exit(-1)
+          }
+
+          // 上传本地文件。
+          err = bucket.PutObject(name, bytes.NewReader(b), oss.ContentType(属性))
+          if err != nil {
+            fmt.Println("Error:", err)
+            os.Exit(-1)
+          }
+          
+          imageurl = "https://waterflow-scrapy.oss-cn-beijing.aliyuncs.com/" + name
+          
+        } else if(imagesrc!=""){
+          
+          
+          res, err := http.Get(imagesrc)
+          if err != nil{
+            fmt.Println(imagesrc)
+            panic(err)
+          }
+          defer res.Body.Close()
+
+          client, err := oss.New("oss-cn-beijing.aliyuncs.com", "LTAIt4GfhTk7x4r5", "PI7lKD9hkAjK42c68tzPIZatUZ5Zc8")
+          if err != nil {
+            fmt.Println("Error:", err)
+            os.Exit(-1)
+          }
+
+          // 获取存储空间。
+          bucket, err := client.Bucket("waterflow-scrapy")
+          if err != nil {
+            fmt.Println("Error:", err)
+            os.Exit(-1)
+          }
+
+          // 上传本地文件。
+          err = bucket.PutObject(name, res.Body, oss.ContentType(属性))
+          if err != nil {
+            fmt.Println("Error:", err)
+            os.Exit(-1)
+          }
+          
+          imageurl = "https://waterflow-scrapy.oss-cn-beijing.aliyuncs.com/" + name
+        }
+
+        if imageurl != "" {
+          stmt, err := db.Prepare("INSERT waterflow_news SET newsname=?,newsurl=?,newstime=?,author=?,body=?,imageurl=?,gettime=?")
+            checkErr(err)
+
+          _, err = stmt.Exec(band, href, newstime, author, str, imageurl, now_time)
+            checkErr(err)
+
+          json_file.NewsList = append(json_file.NewsList, NewsLists{NewsName: band,NewsUrl: href,Newstime: newstime, Author:author, Body:str, Imageurl:imageurl})
+          news_num++
+        }
+
+        if news_num >= 19 {
+          return false
+        }
+        return true
+      })
+      page_num++
     }
+  } else {
+    rows, err := db.Query("SELECT * FROM waterflow_news where gettime=?",get_time)
+    checkErr(err)
 
-    if imageurl != "" {
-      json_file.NewsList = append(json_file.NewsList, NewsLists{NewsName: band,NewsUrl: href,Newstime: newstime, Author:author, Body:str, Imageurl:imageurl})
-      if i==4{
-        return false
-      }
+    for rows.Next() {
+      var uid int
+      var name string
+      var newsurl string
+      var newstime string
+      var author string
+      var body string
+      var imageurl string
+      var none_time int
+      err = rows.Scan(&uid, &name, &newsurl, &newstime, &author, &body, &imageurl, &none_time)
+      checkErr(err)
+      json_file.NewsList = append(json_file.NewsList, NewsLists{NewsName: name,NewsUrl: newsurl,Newstime: newstime, Author:author, Body:body, Imageurl:imageurl})
     }
+  }
 
-    return true
-  })
 
+  db.Close()
   json_fin, err := json.Marshal(json_file)
   if err != nil {
     fmt.Println("json err:", err)
@@ -782,9 +823,9 @@ func search(req *air.Request, res *air.Response) error {
   pAREA := req.Param("area")
   p_name := pNAME.Value().String()
   p_area := pAREA.Value().String()
-  if pAREA == nil || pNAME == nil{
+  if pAREA == nil || pNAME == nil{//错误
     return a.NotFoundHandler(req, res)
-  } else if p_area == "all" && p_name != "all"{
+  } else if p_area == "all" && p_name != "all"{//仅搜索名字
       
       s := waterflow_info_struct{}
       var json_file waterflow_info_struct
@@ -815,7 +856,7 @@ func search(req *air.Request, res *air.Response) error {
       res.Header.Set("Content-Type", "application/json; charset=utf-8")
       return res.WriteJSON(s)
 
-  } else if p_area == "all" && p_name == "all"{
+  } else if p_area == "all" && p_name == "all"{//检索所有
       s := waterflow_info_struct{}
       var json_file waterflow_info_struct
       json_file.PostTime = time.Now().Format("2006-01-02")
@@ -844,7 +885,7 @@ func search(req *air.Request, res *air.Response) error {
       json.Unmarshal(json_fin, &s)
       res.Header.Set("Content-Type", "application/json; charset=utf-8")
       return res.WriteJSON(s)
-  } else if p_area != "all" && p_name == "all"{
+  } else if p_area != "all" && p_name == "all"{//检索地区
       s := waterflow_info_struct{}
       var json_file waterflow_info_struct
       json_file.PostTime = time.Now().Format("2006-01-02")
@@ -873,7 +914,7 @@ func search(req *air.Request, res *air.Response) error {
       json.Unmarshal(json_fin, &s)
       res.Header.Set("Content-Type", "application/json; charset=utf-8")
       return res.WriteJSON(s)
-  } else {
+  } else {//地区＋名字联合检索
       s := waterflow_info_struct{}
       var json_file waterflow_info_struct
       json_file.PostTime = time.Now().Format("2006-01-02")
@@ -903,7 +944,6 @@ func search(req *air.Request, res *air.Response) error {
       res.Header.Set("Content-Type", "application/json; charset=utf-8")
       return res.WriteJSON(s)
   }
-  
 }
 
 func checkErr(err error) {
