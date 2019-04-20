@@ -116,8 +116,8 @@ func main() {
   )
 
   a.GET("/getnews", Scrape)
-  a.GET("/getwaterflowinfo", get_waterflow_info)
-  a.GET("/getwaterflowdetail", get_waterflow_detail)
+  a.GET("/info", get_waterflow_info)
+  a.GET("/detail", get_waterflow_detail)
   a.GET("/getcomments", get_comments)
   a.GET("/s",search)
   a.POST("/api/v1/comments",commentsHandler)
@@ -724,28 +724,24 @@ func get_waterflow_info(req *air.Request, res *air.Response) error {
   var Order string
   var Family string
   var Genus string
+  var p int 
 
   pNUM := req.Param("page")
   if pNUM == nil {  
-    rows, err := db.Query("SELECT * FROM waterflow_info")
-    checkErr(err)
-
-    for rows.Next() {
-      err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
-      checkErr(err)
-      json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
-    } 
+    p = 1
   } else {
-    p,_ := pNUM.Value().Int()
-    i := 10*(p-1)+1
-    for ; i <= 10*p; i++{
-      err := db.QueryRow("SELECT * FROM waterflow_info WHERE id=?", i).Scan(&uid, &name, &Order, &Family, &Genus)
-      if err == sql.ErrNoRows{
-        break;
-      } 
-      json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus}) 
-    }
+    p,_ = pNUM.Value().Int()
   }
+
+  i := 10*(p-1)+1
+  for ; i <= 10*p; i++{
+    err := db.QueryRow("SELECT * FROM waterflow_info WHERE id=?", i).Scan(&uid, &name, &Order, &Family, &Genus)
+    if err == sql.ErrNoRows{
+      break;
+    } 
+    json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus}) 
+  }
+  
   db.Close()
   json_fin, err := json.Marshal(json_file)
   if err != nil {
