@@ -753,26 +753,38 @@ func get_waterflow_info(req *air.Request, res *air.Response) error {
 }
 
 func get_waterflow_detail(req *air.Request, res *air.Response) error {
+ 
+  p_NAME := req.Param("name")
+  if p_NAME == nil {
+    return a.NotFoundHandler(req, res)
+  }
+
+  pNAME := req.Param("name").Value().String()
   s := waterflow_detail_struct{}
   var json_file waterflow_detail_struct
   json_file.PostTime = time.Now().Format("2006-01-02")
-
+  
   db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
   checkErr(err)
   //查询数据
-  rows, err := db.Query("SELECT * FROM waterflow_detail")
-  checkErr(err)
+  //rows, err := db.Query("SELECT * FROM waterflow_detail")
+  //checkErr(err)
 
-  for rows.Next() {
+  //for rows.Next() {
     var uid int
     var name string
     var latin_name string
     var introduce string
     var imgurl string
-    err = rows.Scan(&uid, &name, &latin_name, &introduce, &imgurl)
-    checkErr(err)
-    json_file.Waterflow_Detail = append(json_file.Waterflow_Detail, Flows_detail{Uid: uid,Name: name,Latin_name: latin_name,Introduce: introduce, Imgurl: imgurl})
-  }
+  //  err = rows.Scan(&uid, &name, &latin_name, &introduce, &imgurl)
+    err = db.QueryRow("SELECT * FROM waterflow_detail where name=?",pNAME).Scan(&uid, &name, &latin_name, &introduce, &imgurl)
+    if err != sql.ErrNoRows{
+      json_file.Waterflow_Detail = append(json_file.Waterflow_Detail, Flows_detail{Uid: uid,Name: name,Latin_name: latin_name,Introduce: introduce, Imgurl: imgurl})
+    }
+    
+  //} 
+  
+
   db.Close()
   json_fin, err := json.Marshal(json_file)
   if err != nil {
@@ -781,6 +793,7 @@ func get_waterflow_detail(req *air.Request, res *air.Response) error {
   json.Unmarshal(json_fin, &s)
   res.Header.Set("Content-Type", "application/json; charset=utf-8")
   return res.WriteJSON(s)
+
 }
 
 func search(req *air.Request, res *air.Response) error {
