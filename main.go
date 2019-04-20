@@ -790,12 +790,19 @@ func get_waterflow_detail(req *air.Request, res *air.Response) error {
 func search(req *air.Request, res *air.Response) error {
   pNAME := req.Param("name")
   pAREA := req.Param("area")
+  pPAGE := req.Param("page")
   p_name := pNAME.Value().String()
   p_area := pAREA.Value().String()
+  var page_num int
+  if pPAGE == nil {
+        page_num = 1
+  } else {
+    page_num,_ = pPAGE.Value().Int()
+  }
+  count := 1
   if pAREA == nil || pNAME == nil{//错误
     return a.NotFoundHandler(req, res)
   } else if p_area == "all" && p_name != "all"{//仅搜索名字
-      
       s := waterflow_info_struct{}
       var json_file waterflow_info_struct
       json_file.PostTime = time.Now().Format("2006-01-02")
@@ -803,7 +810,7 @@ func search(req *air.Request, res *air.Response) error {
       db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
       checkErr(err)
       //查询数据
-      rows, err := db.Query("SELECT * FROM waterflow_info where name like ?","%" + p_name + "%")
+      rows, err := db.Query("SELECT * FROM waterflow_info where name like ? ORDER BY id asc;","%" + p_name + "%")
       checkErr(err)
 
       for rows.Next() {
@@ -814,7 +821,10 @@ func search(req *air.Request, res *air.Response) error {
         var Genus string
         err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
         checkErr(err)
-        json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
+        if count >= 10*(page_num-1)+1 && count <= 10*page_num {
+          json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: count,Name: name,Order: Order,Family: Family, Genus: Genus})
+        }
+        count++
       }
       db.Close()
       json_fin, err := json.Marshal(json_file)
@@ -824,7 +834,6 @@ func search(req *air.Request, res *air.Response) error {
       json.Unmarshal(json_fin, &s)
       res.Header.Set("Content-Type", "application/json; charset=utf-8")
       return res.WriteJSON(s)
-
   } else if p_area == "all" && p_name == "all"{//检索所有
       s := waterflow_info_struct{}
       var json_file waterflow_info_struct
@@ -833,7 +842,7 @@ func search(req *air.Request, res *air.Response) error {
       db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
       checkErr(err)
       //查询数据
-      rows, err := db.Query("SELECT * FROM waterflow_info")
+      rows, err := db.Query("SELECT * FROM waterflow_info ORDER BY id asc;")
       checkErr(err)
 
       for rows.Next() {
@@ -844,7 +853,10 @@ func search(req *air.Request, res *air.Response) error {
         var Genus string
         err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
         checkErr(err)
-        json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
+        if count >= 10*(page_num-1)+1 && count <= 10*page_num {
+          json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: count,Name: name,Order: Order,Family: Family, Genus: Genus})
+        }
+        count++
       }
       db.Close()
       json_fin, err := json.Marshal(json_file)
@@ -862,7 +874,7 @@ func search(req *air.Request, res *air.Response) error {
       db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
       checkErr(err)
       //查询数据
-      rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_REF_area where waterflow_info.id = waterflow_REF_area.waterflow_id and Area.area_id=? and Area.area_id = waterflow_REF_area.area_id",p_area)
+      rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_REF_area where waterflow_info.id = waterflow_REF_area.waterflow_id and (Area.area_id=? or Area.area_id='OK')and Area.area_id = waterflow_REF_area.area_id ORDER BY waterflow_info.id asc;",p_area)
       checkErr(err)
 
       for rows.Next() {
@@ -873,7 +885,10 @@ func search(req *air.Request, res *air.Response) error {
         var Genus string
         err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
         checkErr(err)
-        json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
+        if count >= 10*(page_num-1)+1 && count <= 10*page_num {
+          json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: count,Name: name,Order: Order,Family: Family, Genus: Genus})
+        }
+        count++
       }
       db.Close()
       json_fin, err := json.Marshal(json_file)
@@ -891,7 +906,7 @@ func search(req *air.Request, res *air.Response) error {
       db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
       checkErr(err)
       //查询数据
-      rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_REF_area where waterflow_info.id = waterflow_REF_area.waterflow_id and Area.area_id=? and Area.area_id = waterflow_REF_area.area_id and name like ?",p_area, "%" + p_name + "%")
+      rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_REF_area where waterflow_info.id = waterflow_REF_area.waterflow_id and (Area.area_id=? or Area.area_id='OK') and Area.area_id = waterflow_REF_area.area_id and name like ? ORDER BY waterflow_info.id asc;",p_area, "%" + p_name + "%")
       checkErr(err)
 
       for rows.Next() {
@@ -902,7 +917,10 @@ func search(req *air.Request, res *air.Response) error {
         var Genus string
         err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
         checkErr(err)
-        json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: uid,Name: name,Order: Order,Family: Family, Genus: Genus})
+        if count >= 10*(page_num-1)+1 && count <= 10*page_num {
+          json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: count,Name: name,Order: Order,Family: Family, Genus: Genus})
+        }
+        count++
       }
       db.Close()
       json_fin, err := json.Marshal(json_file)
@@ -958,6 +976,7 @@ func Pearson(x1 float64,x2 float64,x3 float64,x4 float64,y1 float64,y2 float64,y
 
   return num1/(num2*num3)
 }
+
 func Round2(f float64) float64 {
   n10 := math.Pow10(4)
   return math.Trunc((f+0.5/n10)*n10) / n10
