@@ -114,7 +114,7 @@ func main() {
       return res.Redirect("/building")
     },
   )
-
+  
   a.GET("/getnews", Scrape)
   a.GET("/info", get_waterflow_info)
   a.GET("/detail", get_waterflow_detail)
@@ -294,6 +294,7 @@ func Scrape(req *air.Request, respon *air.Response) error {
       page_num++
     }
   } else {
+    json_file.PostTime = time.Now().Format("2006-01-02")
     rows, err := db.Query("SELECT * FROM waterflow_news where gettime=?",get_time)
     checkErr(err)
 
