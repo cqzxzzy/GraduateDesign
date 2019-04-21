@@ -132,7 +132,7 @@ func Scrape(req *air.Request, respon *air.Response) error {
   s1 := NewsMessage{}
   var json_file NewsMessage
 
-  db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+  db, err := sql.Open("mysql", "root:chapus1215@tcp(cdb-6qucl950.bj.tencentcdb.com:10102)/waterflow_alpha?charset=utf8")
   checkErr(err)
 
   var get_time int64
@@ -335,10 +335,8 @@ func commentsHandler(req *air.Request, res *air.Response) error {
   mail_address := mail_address_A.String()
   send_time := time.Now().Format("2006-01-02 15:04:05") 
 
-  db, err := sql.Open("mysql", "root:123456@/test?charset=utf8")
+  db, err := sql.Open("mysql", "root:chapus1215@tcp(cdb-6qucl950.bj.tencentcdb.com:10102)/waterflow_alpha?charset=utf8")
   checkErr(err)
-
- 
 
   stmt, err := db.Prepare("INSERT message_board SET user_name=?,comment=?,address=?,time=?")
     checkErr(err)
@@ -370,7 +368,7 @@ func dailypushHandler(req *air.Request, res *air.Response) error {
   var json_file waterflow_detail_struct
   json_file.PostTime = time.Now().Format("2006-01-02")
 
-  db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+  db, err := sql.Open("mysql", "root:chapus1215@tcp(cdb-6qucl950.bj.tencentcdb.com:10102)/waterflow_alpha?charset=utf8")
   checkErr(err)
   //查询数据
   rows, err := db.Query("SELECT * FROM waterflow_detail where id=? or id=?", i+1, j+1)
@@ -619,7 +617,7 @@ func testHandler(req *air.Request, res *air.Response) error {
     introduce = "你是一只热情、为他鸟着想、易感应、有责任心的水鸟咕咕。非常注重其他水鸟的感情、需求和动机。善于发现其他水鸟的潜能，并希望能帮助他们实现。能成为水鸟或水鸟群体成长和进步的催化剂。忠诚，对于赞扬和批评都会积极地回应。友善、好社交。在团体中能很好地帮助水鸟，并有鼓舞水鸟的领导能力。"
   }
 
-  db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+  db, err := sql.Open("mysql", "root:chapus1215@tcp(cdb-6qucl950.bj.tencentcdb.com:10102)/waterflow_alpha?charset=utf8")
   checkErr(err)
   //查询数据
   rows, err := db.Query("SELECT * FROM waterflow_test")
@@ -684,7 +682,7 @@ func get_comments(req *air.Request, res *air.Response) error {
 
   i := 5*(p-1) + 1
 
-  db, err := sql.Open("mysql", "root:123456@/test?charset=utf8")
+  db, err := sql.Open("mysql", "root:chapus1215@tcp(172.21.0.11:3306)/waterflow_alpha?charset=utf8")
   checkErr(err)
   //查询数据
 
@@ -716,7 +714,7 @@ func get_waterflow_info(req *air.Request, res *air.Response) error {
   var json_file waterflow_info_struct
   json_file.PostTime = time.Now().Format("2006-01-02")
 
-  db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+  db, err := sql.Open("mysql", "root:chapus1215@tcp(cdb-6qucl950.bj.tencentcdb.com:10102)/waterflow_alpha?charset=utf8")
   checkErr(err)
 
   var uid int
@@ -764,7 +762,7 @@ func get_waterflow_detail(req *air.Request, res *air.Response) error {
   var json_file waterflow_detail_struct
   json_file.PostTime = time.Now().Format("2006-01-02")
   
-  db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+  db, err := sql.Open("mysql", "root:chapus1215@tcp(cdb-6qucl950.bj.tencentcdb.com:10102)/waterflow_alpha?charset=utf8")
   checkErr(err)
   //查询数据
   //rows, err := db.Query("SELECT * FROM waterflow_detail")
@@ -816,7 +814,7 @@ func search(req *air.Request, res *air.Response) error {
       var json_file waterflow_info_struct
       json_file.PostTime = time.Now().Format("2006-01-02")
 
-      db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+      db, err := sql.Open("mysql", "root:chapus1215@tcp(cdb-6qucl950.bj.tencentcdb.com:10102)/waterflow_alpha?charset=utf8")
       checkErr(err)
       //查询数据
       rows, err := db.Query("SELECT * FROM waterflow_info where name like ? ORDER BY id asc;","%" + p_name + "%")
@@ -848,7 +846,7 @@ func search(req *air.Request, res *air.Response) error {
       var json_file waterflow_info_struct
       json_file.PostTime = time.Now().Format("2006-01-02")
 
-      db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+      db, err := sql.Open("mysql", "root:chapus1215@tcp(cdb-6qucl950.bj.tencentcdb.com:10102)/waterflow_alpha?charset=utf8")
       checkErr(err)
       //查询数据
       rows, err := db.Query("SELECT * FROM waterflow_info ORDER BY id asc;")
@@ -880,10 +878,10 @@ func search(req *air.Request, res *air.Response) error {
       var json_file waterflow_info_struct
       json_file.PostTime = time.Now().Format("2006-01-02")
 
-      db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+      db, err := sql.Open("mysql", "root:chapus1215@tcp(cdb-6qucl950.bj.tencentcdb.com:10102)/waterflow_alpha?charset=utf8")
       checkErr(err)
       //查询数据
-      rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_REF_area where waterflow_info.id = waterflow_REF_area.waterflow_id and (Area.area_id=? or Area.area_id='OK')and Area.area_id = waterflow_REF_area.area_id ORDER BY waterflow_info.id asc;",p_area)
+      rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_ref_area where waterflow_info.id = waterflow_ref_area.waterflow_id and (area.area_id=? or area.area_id='OK')and area.area_id = waterflow_ref_area.area_id ORDER BY waterflow_info.id asc;",p_area)
       checkErr(err)
 
       for rows.Next() {
@@ -912,10 +910,10 @@ func search(req *air.Request, res *air.Response) error {
       var json_file waterflow_info_struct
       json_file.PostTime = time.Now().Format("2006-01-02")
 
-      db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
+      db, err := sql.Open("mysql", "root:chapus1215@tcp(cdb-6qucl950.bj.tencentcdb.com:10102)/waterflow_alpha?charset=utf8")
       checkErr(err)
       //查询数据
-      rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_REF_area where waterflow_info.id = waterflow_REF_area.waterflow_id and (Area.area_id=? or Area.area_id='OK') and Area.area_id = waterflow_REF_area.area_id and name like ? ORDER BY waterflow_info.id asc;",p_area, "%" + p_name + "%")
+      rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_ref_area where waterflow_info.id = waterflow_ref_area.waterflow_id and (area.area_id=? or area.area_id='OK') and area.area_id = waterflow_ref_area.area_id and name like ? ORDER BY waterflow_info.id asc;",p_area, "%" + p_name + "%")
       checkErr(err)
 
       for rows.Next() {
