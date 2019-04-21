@@ -121,7 +121,7 @@ func main() {
   a.GET("/getcomments", get_comments)
   a.GET("/s",search)
   a.POST("/api/v1/comments",commentsHandler)
-  a.POST("/api/v1/dailypush",dailypushHandler)
+  a.GET("/api/v1/dailypush",dailypushHandler)
   a.POST("/api/v1/test",testHandler)
   a.Serve()
 }
@@ -356,14 +356,13 @@ func commentsHandler(req *air.Request, res *air.Response) error {
 }
 
 func dailypushHandler(req *air.Request, res *air.Response) error {
-  i := rand.Intn(4)
-  j := rand.Intn(4)
 
-  for ; i == 0; {
-    i = rand.Intn(4)
-  }
-  for ; j == 0 || j==i; {
-    j = rand.Intn(4)
+  rand.Seed(time.Now().UnixNano())
+  i := rand.Intn(39)
+  j := rand.Intn(39)
+
+  for ;j==i; {
+    j = rand.Intn(39)
   }
 
   s := waterflow_detail_struct{}
@@ -373,7 +372,7 @@ func dailypushHandler(req *air.Request, res *air.Response) error {
   db, err := sql.Open("mysql", "root:123456@/waterflow_alpha?charset=utf8")
   checkErr(err)
   //查询数据
-  rows, err := db.Query("SELECT * FROM waterflow_detail where id=? or id=?", i, j)
+  rows, err := db.Query("SELECT * FROM waterflow_detail where id=? or id=?", i+1, j+1)
   checkErr(err)
 
   for rows.Next() {
