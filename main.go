@@ -97,6 +97,7 @@ type Map map[string]interface{}
 
 func main() {
   a.DebugMode = true
+  a.Address = ":8080"
   a.FILE("/error", "templates/error.html") //var errorhtml string
   a.FILE("/building", "templates/build.html") //var errorhtml string
   a.FILE("/test", "templates/test.html")
