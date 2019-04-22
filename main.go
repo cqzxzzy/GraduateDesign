@@ -29,22 +29,22 @@ var (
 )
 
 type NewsMessage struct {
-  PostTime string `json:"get_time"`
+  PostTime string `json:"getTime"`
   NewsList []NewsLists `json:"news"`
 }
 
 type NewsLists struct {
-  NewsName string `json:"newsname"`
-  NewsUrl   string  `json:"newsurl"`
-  Newstime string `json:time`
-  Author string `json:author`
-  Body string `json:content`
-  Imageurl string `json:imageurl`
+  NewsName string `json:"newsName"`
+  NewsUrl   string  `json:"newsUrl"`
+  Newstime string `json:"time"`
+  Author string `json:"author"`
+  Body string `json:"content"`
+  Imageurl string `json:"imageUrl"`
 }
 
 type waterflow_info_struct struct {
-  PostTime string `json:"get_time"`
-  Waterflow_List []Flows `json:"waterflow_info"`
+  PostTime string `json:"getTime"`
+  Waterflow_List []Flows `json:"waterflowInfo"`
 }
 
 type Flows struct {
@@ -56,8 +56,8 @@ type Flows struct {
 }
 
 type Message_board_struct struct {
-  PostTime string `json:"get_time"`
-  Board []Message `json:"Message"`
+  PostTime string `json:"getTime"`
+  Board []Message `json:"message"`
 }
 
 type Message struct {
@@ -65,20 +65,20 @@ type Message struct {
   Name string `json:"name"`
   Comment string `json:"comment"`
   Mail string `json:"address"`
-  SendTime string `json:"sendtime"`
+  SendTime string `json:"sendTime"`
 }
 
 type waterflow_detail_struct struct {
-  PostTime string `json:"get_time"`
-  Waterflow_Detail []Flows_detail `json:"waterflow_detail"`
+  PostTime string `json:"getTime"`
+  Waterflow_Detail []Flows_detail `json:"waterflowDetail"`
 }
 
 type Flows_detail struct {
   Uid int `json:"uid"`
   Name   string  `json:"name"`
-  Latin_name   string  `json:"latin_name"`
+  Latin_name   string  `json:"latinName"`
   Introduce   string  `json:"introduce"`
-  Imgurl   string  `json:"imgurl"`
+  Imgurl   string  `json:"imageUrl"`
 }
 
 type Test_result struct {
