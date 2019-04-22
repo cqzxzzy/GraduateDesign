@@ -128,7 +128,14 @@ func main() {
 }
 
 func Scrape(req *air.Request, respon *air.Response) error {
-
+  /*
+    功能：获取新闻
+    URL：/getnews
+    方式：GET
+    参数：无
+    返回格式：json
+  */
+  //获取当前时间戳，声明变量
   now_time := time.Now().Unix()
   s1 := NewsMessage{}
   var json_file NewsMessage
@@ -138,10 +145,10 @@ func Scrape(req *air.Request, respon *air.Response) error {
 
   var get_time int64
   err = db.QueryRow("SELECT gettime FROM waterflow_news where id=(select max(id) from waterflow_news)").Scan(&get_time)
-  if err == sql.ErrNoRows || now_time-get_time >= 604800{ //执行爬取函数
+  if err == sql.ErrNoRows || now_time-get_time >= 604800{ //如果返回为空或者时间差大于7天，执行爬取函数
     
-    var page_num int
-    var news_num int
+    var page_num int //爬取网站页码
+    var news_num int //新闻个数
     page_num = 1
     news_num = 0
     
@@ -213,7 +220,6 @@ func Scrape(req *air.Request, respon *air.Response) error {
 
           imagesrc = strings.TrimPrefix(imagesrc,"data:image/jpeg;base64,")
           
-
           b, err := base64.StdEncoding.DecodeString(imagesrc)
           if err != nil {
             panic(err)
@@ -221,6 +227,7 @@ func Scrape(req *air.Request, respon *air.Response) error {
           属性 = mimesniffer.Sniff(b)
           fmt.Println(属性)
           
+          // 打开云存储
           client, err := oss.New("oss-cn-beijing.aliyuncs.com", "LTAIt4GfhTk7x4r5", "PI7lKD9hkAjK42c68tzPIZatUZ5Zc8")
           if err != nil {
             fmt.Println("Error:", err)
@@ -245,7 +252,7 @@ func Scrape(req *air.Request, respon *air.Response) error {
           
         } else if(imagesrc!=""){
           
-          
+          //如果是url，则直接下载保存到云端
           res, err := http.Get(imagesrc)
           if err != nil{
             fmt.Println(imagesrc)
@@ -295,6 +302,7 @@ func Scrape(req *air.Request, respon *air.Response) error {
       page_num++
     }
   } else {
+    //直接查询数据库
     json_file.PostTime = time.Now().Format("2006-01-02")
     rows, err := db.Query("SELECT * FROM waterflow_news where gettime=?",get_time)
     checkErr(err)
@@ -314,7 +322,6 @@ func Scrape(req *air.Request, respon *air.Response) error {
     }
   }
 
-
   db.Close()
   json_fin, err := json.Marshal(json_file)
   if err != nil {
@@ -327,6 +334,18 @@ func Scrape(req *air.Request, respon *air.Response) error {
 }
 
 func commentsHandler(req *air.Request, res *air.Response) error {
+  /*
+    评论功能
+    URL：/api/v1/comments
+    方式：post
+    参数：
+      name（非空，string，用户名字）
+      content（非空，string，评论内容）
+      mail（非空，string，联系方式）
+    返回：json
+  */
+
+  //获取参数，转换为string
   user_name_A := req.Param("name").Value()
   content_A := req.Param("content").Value()
   mail_address_A := req.Param("mail").Value()
@@ -338,6 +357,8 @@ func commentsHandler(req *air.Request, res *air.Response) error {
 
   db, err := sql.Open("mysql", "root:chapus1215@tcp(cdb-6qucl950.bj.tencentcdb.com:10102)/waterflow_alpha?charset=utf8")
   checkErr(err)
+
+  //存入数据库
 
   stmt, err := db.Prepare("INSERT message_board SET user_name=?,comment=?,address=?,time=?")
     checkErr(err)
@@ -356,8 +377,14 @@ func commentsHandler(req *air.Request, res *air.Response) error {
 }
 
 func dailypushHandler(req *air.Request, res *air.Response) error {
-
-  rand.Seed(time.Now().UnixNano())
+  /*
+    随机推送功能
+    URL：/api/v1/dailypush
+    方式：post
+    参数：无
+    返回：json
+  */
+  rand.Seed(time.Now().UnixNano())//添加种子
   i := rand.Intn(39)
   j := rand.Intn(39)
 
@@ -396,6 +423,12 @@ func dailypushHandler(req *air.Request, res *air.Response) error {
 }
 
 func testHandler(req *air.Request, res *air.Response) error {
+  /*
+    URL：/api/v1/test
+    方式：post
+    返回：json
+    详情进入页面查看（/test）
+  */
   var ans [31]string
   ans[1] = req.Param("Quest1").Value().String()
   ans[2] = req.Param("Quest2").Value().String()
@@ -671,6 +704,13 @@ func testHandler(req *air.Request, res *air.Response) error {
 }
 
 func get_comments(req *air.Request, res *air.Response) error {
+  /*
+    URL：/getcomments
+    方式：GET
+    参数：page（非空，int，页码）
+    返回格式：json
+  */
+
   pNUM := req.Param("page")
   if pNUM == nil {
     return a.NotFoundHandler(req, res)
@@ -681,7 +721,7 @@ func get_comments(req *air.Request, res *air.Response) error {
   var json_file Message_board_struct
   json_file.PostTime = time.Now().Format("2006-01-02 15:04:05")
 
-  i := 5*(p-1) + 1
+  i := 5*(p-1) + 1//每页显示五条评论
 
   db, err := sql.Open("mysql", "root:chapus1215@tcp(172.21.0.11:3306)/waterflow_alpha?charset=utf8")
   checkErr(err)
@@ -710,7 +750,13 @@ func get_comments(req *air.Request, res *air.Response) error {
 }
 
 func get_waterflow_info(req *air.Request, res *air.Response) error {
-
+  /*
+    获取所有水鸟简略信息
+    URL：/info
+    方式：GET
+    参数：page（可空，int，页码，default：1）
+    返回格式：json
+  */
   s := waterflow_info_struct{}
   var json_file waterflow_info_struct
   json_file.PostTime = time.Now().Format("2006-01-02")
@@ -752,7 +798,13 @@ func get_waterflow_info(req *air.Request, res *air.Response) error {
 }
 
 func get_waterflow_detail(req *air.Request, res *air.Response) error {
- 
+  /*
+    获取单个水鸟详细信息
+    URL：/detail
+    方式：GET
+    参数：name（非空，string，水鸟名字）
+    返回格式：json
+  */
   p_NAME := req.Param("name")
   if p_NAME == nil {
     return a.NotFoundHandler(req, res)
@@ -796,6 +848,16 @@ func get_waterflow_detail(req *air.Request, res *air.Response) error {
 }
 
 func search(req *air.Request, res *air.Response) error {
+
+  /*
+    搜索功能
+    URL：/s
+    方式：GET
+    参数：
+      name（非空，string，水鸟名字，若为“all”则表示不限制水鸟）
+      area（非空，string，地区代码，若为“all”则表示不限制地区（详情见附录1））
+      page（可空，int，页码，default：1）
+  */
   pNAME := req.Param("name")
   pAREA := req.Param("area")
   pPAGE := req.Param("page")
@@ -942,12 +1004,14 @@ func search(req *air.Request, res *air.Response) error {
 }
 
 func checkErr(err error) {
+  //检查错误
   if err != nil {
     panic(err)
   }
 }
 
 func Success(res *air.Response, data interface{}) error {
+  //返回200状态码的json
   res.Status = 200
   if data == nil {
     data = ""
@@ -960,6 +1024,7 @@ func Success(res *air.Response, data interface{}) error {
 }
 
 func RandonFloat(data float64) float64 {
+  //随机浮点数
   i := rand.Intn(100)
   j := float64(i-50)/1000
   var ans float64 = data*(1.0+j)
@@ -967,14 +1032,14 @@ func RandonFloat(data float64) float64 {
 }
 
 func Euclidean(x1 float64,x2 float64,x3 float64,x4 float64,y1 float64,y2 float64,y3 float64,y4 float64) float64 {
-
+  //欧式距离
   sum := math.Pow(x1-y1,2) + math.Pow(x2-y2,2) + math.Pow(x3-y3,2) + math.Pow(x4-y4,2)
   return math.Sqrt(sum)
 }
 
 func Pearson(x1 float64,x2 float64,x3 float64,x4 float64,y1 float64,y2 float64,y3 float64,y4 float64) float64 {
+  //皮尔森相关系数
   var avr_x, avr_y float64
-
   avr_x = (x1 + x2 + x3 + x4)/4
   avr_y = (y1 + y2 + y3 + y4)/4
 
@@ -986,6 +1051,7 @@ func Pearson(x1 float64,x2 float64,x3 float64,x4 float64,y1 float64,y2 float64,y
 }
 
 func Round2(f float64) float64 {
+  //保留两位小数
   n10 := math.Pow10(4)
   return math.Trunc((f+0.5/n10)*n10) / n10
 }
