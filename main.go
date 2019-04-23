@@ -21,6 +21,7 @@ import (
   "strconv"
   "math"
   "net/url"
+  "github.com/air-gases/logger"
 )
 
 var (
@@ -63,11 +64,16 @@ type Message_board_struct struct {
 type Message struct {
   Uid int `json:"uid"`
   Name string `json:"name"`
-  Comment string `json:"comment"`
-  Mail string `json:"address"`
+  Comment string `json:"content"`
+  Mail string `json:"mail"`
   SendTime string `json:"sendTime"`
 }
 
+type Req_Message struct {
+  Name string `json:"name"`
+  Content string `json:"content"`
+  Mail string `json:"mail"`
+}
 type waterflow_detail_struct struct {
   PostTime string `json:"getTime"`
   Waterflow_Detail []Flows_detail `json:"waterflowDetail"`
@@ -98,6 +104,9 @@ type Map map[string]interface{}
 func main() {
   a.DebugMode = true
   a.Address = ":8080"
+  a.Pregases = []air.Gas{
+  logger.Gas(logger.GasConfig{}),
+  }
   a.FILE("/error", "templates/error.html") //var errorhtml string
   a.FILE("/building", "templates/build.html") //var errorhtml string
   a.FILE("/test", "templates/test.html")
@@ -346,13 +355,12 @@ func commentsHandler(req *air.Request, res *air.Response) error {
   */
 
   //获取参数，转换为string
-  user_name_A := req.Param("name").Value()
-  content_A := req.Param("content").Value()
-  mail_address_A := req.Param("mail").Value()
+  var s Req_Message
 
-  name := user_name_A.String()
-  content := content_A.String()
-  mail_address := mail_address_A.String()
+  err := req.Bind(&s)
+  checkErr(err)
+  fmt.Println(s)
+
   send_time := time.Now().Format("2006-01-02 15:04:05") 
 
   db, err := sql.Open("mysql", "root:chapus1215@tcp(cdb-6qucl950.bj.tencentcdb.com:10102)/waterflow_alpha?charset=utf8")
@@ -363,7 +371,7 @@ func commentsHandler(req *air.Request, res *air.Response) error {
   stmt, err := db.Prepare("INSERT message_board SET user_name=?,comment=?,address=?,time=?")
     checkErr(err)
 
-  re, err := stmt.Exec(name, content, mail_address, send_time)
+  re, err := stmt.Exec(s.Name, s.Content, s.Mail, send_time)
     checkErr(err)
 
   id, err := re.LastInsertId()
