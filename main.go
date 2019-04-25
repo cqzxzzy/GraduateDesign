@@ -66,6 +66,7 @@ type Message struct {
   Name string `json:"name"`
   Comment string `json:"content"`
   Mail string `json:"mail"`
+  Reply int `json:"needReply"`
   SendTime string `json:"sendTime"`
 }
 
@@ -73,6 +74,7 @@ type Req_Message struct {
   Name string `json:"name"`
   Content string `json:"content"`
   Mail string `json:"mail"`
+  Reply int `json:"needReply"`
 }
 type waterflow_detail_struct struct {
   PostTime string `json:"getTime"`
@@ -368,10 +370,10 @@ func commentsHandler(req *air.Request, res *air.Response) error {
 
   //存入数据库
 
-  stmt, err := db.Prepare("INSERT message_board SET user_name=?,comment=?,address=?,time=?")
+  stmt, err := db.Prepare("INSERT message_board SET user_name=?,comment=?,address=?,time=?,needreply=?")
     checkErr(err)
 
-  re, err := stmt.Exec(s.Name, s.Content, s.Mail, send_time)
+  re, err := stmt.Exec(s.Name, s.Content, s.Mail, send_time, s.Reply)
     checkErr(err)
 
   id, err := re.LastInsertId()
@@ -715,15 +717,17 @@ func get_comments(req *air.Request, res *air.Response) error {
   /*
     URL：/getcomments
     方式：GET
-    参数：page（非空，int，页码）
+    参数：page
     返回格式：json
   */
-
+  var p int
   pNUM := req.Param("page")
   if pNUM == nil {
-    return a.NotFoundHandler(req, res)
+    p = 1
+  } else {
+    p,_ = pNUM.Value().Int()
   }
-  p,_ := pNUM.Value().Int()
+  
 
   s := Message_board_struct{}
   var json_file Message_board_struct
@@ -741,11 +745,12 @@ func get_comments(req *air.Request, res *air.Response) error {
     var comment string
     var mail string
     var sendtime string
-    err := db.QueryRow("SELECT * FROM message_board WHERE id=?", i).Scan(&uid, &user_name, &comment, &mail, &sendtime)
+    var reply int
+    err := db.QueryRow("SELECT * FROM message_board WHERE id=?", i).Scan(&uid, &user_name, &comment, &mail, &sendtime, &reply)
     if err == sql.ErrNoRows{
       break;
     } 
-    json_file.Board = append(json_file.Board, Message{Uid: uid,Name: user_name,Comment: comment,Mail: mail,SendTime: sendtime})
+    json_file.Board = append(json_file.Board, Message{Uid: uid,Name: user_name,Comment: comment,Mail: mail,SendTime: sendtime, Reply: reply})
   }
   db.Close()
   json_fin, err := json.Marshal(json_file)
@@ -1033,6 +1038,7 @@ func Success(res *air.Response, data interface{}) error {
 
 func RandonFloat(data float64) float64 {
   //随机浮点数
+  rand.Seed(time.Now().UnixNano())
   i := rand.Intn(100)
   j := float64(i-50)/1000
   var ans float64 = data*(1.0+j)
