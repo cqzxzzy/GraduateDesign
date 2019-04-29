@@ -101,6 +101,11 @@ type Test_result struct {
   Similar_imageurl string `json:"该水鸟图片地址"`
 }
 
+type Test_Ans struct {
+  Mode string `json:"mode"`
+  Ans []string `json:"answer"`
+}
+
 type Map map[string]interface{}
 
 func main() {
@@ -111,7 +116,6 @@ func main() {
   }
   a.FILE("/error", "templates/error.html") //var errorhtml string
   a.FILE("/building", "templates/build.html") //var errorhtml string
-  a.FILE("/test", "templates/test.html")
   a.ErrorHandler = func(err error, req *air.Request, res *air.Response) {
     if res.ContentLength > 0 {
       return
@@ -439,7 +443,9 @@ func testHandler(req *air.Request, res *air.Response) error {
     返回：json
     详情进入页面查看（/test）
   */
-  var ans [31]string
+
+
+  /*
   ans[1] = req.Param("Quest1").Value().String()
   ans[2] = req.Param("Quest2").Value().String()
   ans[3] = req.Param("Quest3").Value().String()
@@ -471,12 +477,8 @@ func testHandler(req *air.Request, res *air.Response) error {
   ans[29] = req.Param("Quest29").Value().String()
   ans[30] = req.Param("Quest30").Value().String()
 
-  /*
-  “外倾/内倾”=（内倾-外倾）/21*10 （正分为内倾I， 负分为外倾E）
-  “感觉/直觉”=（感觉-直觉）/26*10（正分为感觉S，负分为直觉N）
-  “思考/情感”=（思考-情感）/24*10（正分为思考T，负分为情感F）
-  “知觉/判断”=（知觉-判断）/22*10（正分为感性P，负分为判断J）
   */
+
   var I, E float64 //内倾，外倾
   var S, N float64 //感觉，直觉
   var T, F float64 //思考，情感
@@ -490,8 +492,34 @@ func testHandler(req *air.Request, res *air.Response) error {
   P = 0
   J = 0
   var i int
+
+  var s Test_Ans
+  err := req.Bind(&s)
+  var ans [31]string
+
+  var QuestCount int
+
+  if s.Mode == "simple"{
+    QuestCount = 10
+  } else if s.Mode == "complex"{
+    QuestCount = 30
+  } else {
+    return a.NotFoundHandler(req, res)
+  }
+
+  for i = 0; i < QuestCount; i++{
+    ans[i+1] = s.Ans[i]
+  }
+
+
+  /*
+  “外倾/内倾”=（内倾-外倾）/21*10 （正分为内倾I， 负分为外倾E）
+  “感觉/直觉”=（感觉-直觉）/26*10（正分为感觉S，负分为直觉N）
+  “思考/情感”=（思考-情感）/24*10（正分为思考T，负分为情感F）
+  “知觉/判断”=（知觉-判断）/22*10（正分为感性P，负分为判断J）
+  */
   //fmt.Println(ans1,ans2,ans3,ans4,ans5,ans6,ans7,ans8,ans9,ans10)
-  for i=1; i<=30; i++ {
+  for i = 1; i <= QuestCount; i++ {
     if(i == 1||i == 4||i==13||i==27){
       if ans[i] == "A" {
         t := 1.0
@@ -589,10 +617,25 @@ func testHandler(req *air.Request, res *air.Response) error {
     }
   }
 
-  IE := Round2((I-E)/10*10)
-  SN := Round2((S-N)/8*10)
-  TF := Round2((T-F)/4*10)
-  PJ := Round2((P-J)/8*10)
+  var IE float64
+  var SN float64
+  var TF float64
+  var PJ float64
+
+  if s.Mode == "simple"{
+    rand.Seed(time.Now().UnixNano())//添加种子
+    RandNum := rand.Intn(10)
+    IE = Round2((I-E)/3*10)
+    SN = Round2((S-N)/3*10)
+    TF = Round2((T-F)/1*10+ float64(RandNum))
+    PJ = Round2((P-J)/3*10)
+  } else {
+    IE = Round2((I-E)/10*10)
+    SN = Round2((S-N)/8*10)
+    TF = Round2((T-F)/4*10)
+    PJ = Round2((P-J)/8*10)
+  }
+
 
   var kind string
   var introduce string
