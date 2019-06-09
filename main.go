@@ -45,6 +45,7 @@ type NewsLists struct {
 
 type waterflow_info_struct struct {
   PostTime string `json:"getTime"`
+  Count int `json:count`
   Waterflow_List []Flows `json:"waterflowInfo"`
 }
 
@@ -58,6 +59,7 @@ type Flows struct {
 
 type Message_board_struct struct {
   PostTime string `json:"getTime"`
+  Count int `json:"count"`
   Board []Message `json:"message"`
 }
 
@@ -782,6 +784,16 @@ func get_comments(req *air.Request, res *air.Response) error {
   checkErr(err)
   //查询数据
 
+
+  var res_info string
+  var res_num int
+  err = db.QueryRow("SELECT count(*) FROM message_board").Scan(&res_info)
+  checkErr(err)
+
+  res_num, err = strconv.Atoi(res_info)
+  checkErr(err)
+  json_file.Count = res_num
+
   for ; i <= 5*p; i++{
     var uid int
     var user_name string
@@ -819,6 +831,15 @@ func get_waterflow_info(req *air.Request, res *air.Response) error {
 
   db, err := sql.Open("mysql", "root:chapus1215@tcp(cdb-6qucl950.bj.tencentcdb.com:10102)/waterflow_alpha?charset=utf8")
   checkErr(err)
+
+  var res_info string
+  var res_num int
+  err = db.QueryRow("SELECT count(*) FROM waterflow_info").Scan(&res_info)
+  checkErr(err)
+
+  res_num, err = strconv.Atoi(res_info)
+  checkErr(err)
+  json_file.Count = res_num
 
   var uid int
   var name string
@@ -920,6 +941,9 @@ func search(req *air.Request, res *air.Response) error {
   p_name := pNAME.Value().String()
   p_area := pAREA.Value().String()
   var page_num int
+  var res_info string
+  var res_num int
+
   if pPAGE == nil {
         page_num = 1
   } else {
@@ -939,6 +963,14 @@ func search(req *air.Request, res *air.Response) error {
       rows, err := db.Query("SELECT * FROM waterflow_info where name like ? ORDER BY id asc;","%" + p_name + "%")
       checkErr(err)
 
+      err = db.QueryRow("SELECT count(*) FROM waterflow_info where name like ? ORDER BY id asc;","%" + p_name + "%").Scan(&res_info)
+      checkErr(err)
+
+      res_num, err = strconv.Atoi(res_info)
+      checkErr(err)
+
+      json_file.Count = res_num
+
       for rows.Next() {
         var uid int
         var name string
@@ -948,6 +980,7 @@ func search(req *air.Request, res *air.Response) error {
         err = rows.Scan(&uid, &name, &Order, &Family, &Genus)
         checkErr(err)
         if count >= 10*(page_num-1)+1 && count <= 10*page_num {
+
           json_file.Waterflow_List = append(json_file.Waterflow_List, Flows{Uid: count,Name: name,Order: Order,Family: Family, Genus: Genus})
         }
         count++
@@ -970,6 +1003,14 @@ func search(req *air.Request, res *air.Response) error {
       //查询数据
       rows, err := db.Query("SELECT * FROM waterflow_info ORDER BY id asc;")
       checkErr(err)
+
+      err = db.QueryRow("SELECT count(*) FROM waterflow_info ORDER BY id asc;").Scan(&res_info)
+      checkErr(err)
+
+      res_num, err = strconv.Atoi(res_info)
+      checkErr(err)
+
+      json_file.Count = res_num
 
       for rows.Next() {
         var uid int
@@ -1003,6 +1044,14 @@ func search(req *air.Request, res *air.Response) error {
       rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_ref_area where waterflow_info.id = waterflow_ref_area.waterflow_id and (area.area_id=? or area.area_id='OK')and area.area_id = waterflow_ref_area.area_id ORDER BY waterflow_info.id asc;",p_area)
       checkErr(err)
 
+      err = db.QueryRow("select count(*) from waterflow_info, area, waterflow_ref_area where waterflow_info.id = waterflow_ref_area.waterflow_id and (area.area_id=? or area.area_id='OK')and area.area_id = waterflow_ref_area.area_id ORDER BY waterflow_info.id asc;",p_area).Scan(&res_info)
+      checkErr(err)
+
+      res_num, err = strconv.Atoi(res_info)
+      checkErr(err)
+
+      json_file.Count = res_num
+
       for rows.Next() {
         var uid int
         var name string
@@ -1034,6 +1083,14 @@ func search(req *air.Request, res *air.Response) error {
       //查询数据
       rows, err := db.Query("select waterflow_info.id, waterflow_info.name, waterflow_info.Order, waterflow_info.Family, waterflow_info.Genus from waterflow_info, area, waterflow_ref_area where waterflow_info.id = waterflow_ref_area.waterflow_id and (area.area_id=? or area.area_id='OK') and area.area_id = waterflow_ref_area.area_id and name like ? ORDER BY waterflow_info.id asc;",p_area, "%" + p_name + "%")
       checkErr(err)
+
+      err = db.QueryRow("select count(*) from waterflow_info, area, waterflow_ref_area where waterflow_info.id = waterflow_ref_area.waterflow_id and (area.area_id=? or area.area_id='OK') and area.area_id = waterflow_ref_area.area_id and name like ? ORDER BY waterflow_info.id asc;",p_area, "%" + p_name + "%").Scan(&res_info)
+      checkErr(err)
+
+      res_num, err = strconv.Atoi(res_info)
+      checkErr(err)
+
+      json_file.Count = res_num
 
       for rows.Next() {
         var uid int
