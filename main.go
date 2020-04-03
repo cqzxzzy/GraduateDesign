@@ -245,7 +245,7 @@ func Scrape(req *air.Request, respon *air.Response) error {
           fmt.Println(属性)
           
           // 打开云存储
-          client, err := oss.New("oss-cn-beijing.aliyuncs.com", "LTAIt4GfhTk7x4r5", "PI7lKD9hkAjK42c68tzPIZatUZ5Zc8")
+          client, err := oss.New("oss-cn-beijing.aliyuncs.com", "1", "1")
           if err != nil {
             fmt.Println("Error:", err)
             os.Exit(-1)
@@ -277,7 +277,7 @@ func Scrape(req *air.Request, respon *air.Response) error {
           }
           defer res.Body.Close()
 
-          client, err := oss.New("oss-cn-beijing.aliyuncs.com", "LTAIt4GfhTk7x4r5", "PI7lKD9hkAjK42c68tzPIZatUZ5Zc8")
+          client, err := oss.New("oss-cn-beijing.aliyuncs.com", "1", "1")
           if err != nil {
             fmt.Println("Error:", err)
             os.Exit(-1)
